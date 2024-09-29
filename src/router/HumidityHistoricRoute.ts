@@ -1,5 +1,6 @@
 import { Request, Response, Router } from "express";
 import humidityHistoricDB from "../database/HumidityHistoricDB";
+import HistoricDB from "../database/HistoricDB";
 
 const route = Router();
 
@@ -23,10 +24,21 @@ route.get("/address/:address/chip/:chip", async (req: Request, res: Response) =>
     }
 });
 
+route.get("/historic/chip/:chip", async (req: Request, res: Response) => {
+    const { chip } = req.params
+    try {
+        const dto = await HistoricDB.findAllHistoric(chip);
+        return res.status(200).json({ data: dto });
+    } catch (error) {
+        return res.status(500).json({ error });
+    }
+});
+
 route.post("/", async (req: Request, res: Response) => {
     const { address, humidity, temperature, chip }: SensorInformations = req.body;
     try {
         await humidityHistoricDB.appendHumidity({ address, humidity, temperature, chip });
+        await HistoricDB.appendHistoric({ chip: String(chip), humidity: String(humidity), temperature: String(temperature) });
         res.status(200).json({ message: "umidade altera com sucesso", humidity: humidity });
     } catch (error) {
         res.status(500).json({ message: "Erro ao alterar a umidade", humidity: humidity });

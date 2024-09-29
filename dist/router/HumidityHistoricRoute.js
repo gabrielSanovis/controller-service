@@ -14,6 +14,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const HumidityHistoricDB_1 = __importDefault(require("../database/HumidityHistoricDB"));
+const HistoricDB_1 = __importDefault(require("../database/HistoricDB"));
 const route = (0, express_1.Router)();
 route.get("/address/:address/chip/:chip", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { address, chip } = req.params;
@@ -28,10 +29,21 @@ route.get("/address/:address/chip/:chip", (req, res) => __awaiter(void 0, void 0
         return res.status(500).json({ error });
     }
 }));
+route.get("/historic/chip/:chip", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { chip } = req.params;
+    try {
+        const dto = yield HistoricDB_1.default.findAllHistoric(chip);
+        return res.status(200).json({ data: dto });
+    }
+    catch (error) {
+        return res.status(500).json({ error });
+    }
+}));
 route.post("/", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { address, humidity, temperature, chip } = req.body;
     try {
         yield HumidityHistoricDB_1.default.appendHumidity({ address, humidity, temperature, chip });
+        yield HistoricDB_1.default.appendHistoric({ chip: String(chip), humidity: String(humidity), temperature: String(temperature) });
         res.status(200).json({ message: "umidade altera com sucesso", humidity: humidity });
     }
     catch (error) {
